@@ -8,7 +8,7 @@ var PORT = process.env.PORT || 8174;
 const app = express();
 const cors = require("cors");
 const db = require("../db");
-const routes = require("../routes/nftRoutes");
+const routes = require("../routes/index.js");
 
 const options = {
   cors: {
