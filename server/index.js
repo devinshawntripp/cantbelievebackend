@@ -2,7 +2,7 @@ const express = require("express");
 require("dotenv").config();
 const http = require("http");
 const path = require("path");
-var socketio = require("socket.io");
+// var socketio = require("socket.io");
 const bodyParser = require("body-parser");
 var PORT = process.env.PORT || 8174;
 const app = express();
@@ -14,7 +14,7 @@ const options = {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
-    transports: ["websocket"],
+    // transports: ["websocket"],
     credentials: true,
   },
   allowEI03: true,
