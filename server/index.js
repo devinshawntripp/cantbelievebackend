@@ -40,14 +40,14 @@ app.use("/api", routes);
 if (process.env.NODE_ENV === "production") {
   app.use(
     express.static(
-      path.join(__dirname, "../../../frontend/angryaliensfrontend/build")
+      path.join(__dirname, "../../cantbelievefrontend/build")
     )
   );
   app.get("*", (request, res) => {
     res.sendFile(
       path.join(
         __dirname,
-        "../../../frontend/angryaliensfrontend/build",
+        "../../cantbelievefrontend/build",
         "index.html"
       )
     );
