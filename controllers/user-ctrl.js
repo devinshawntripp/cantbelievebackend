@@ -1,4 +1,6 @@
 const user = require("../models/user");
+const jwt = require('jsonwebtoken');
+// const jwt_decode = require('jwt-decode')
 const bcrypt = require("bcryptjs");
 
 registerUser = async (req, res) => {
@@ -9,7 +11,7 @@ registerUser = async (req, res) => {
       return res.status(301).json({ msg: "no email or password was sent" });
     }
 
-    const existingUser = user.findOne({ email: email });
+    const existingUser = await user.findOne({ email: email });
 
     if (existingUser) {
       return res
@@ -23,7 +25,7 @@ registerUser = async (req, res) => {
     const newUser = new user({
       email: email,
       password: passHash,
-      admin: false,
+      admin: true,
       vouchers: 0,
       idsSaved: [],
     });
@@ -39,32 +41,36 @@ registerUser = async (req, res) => {
 loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log(req.body)
+    console.log(email);
 
-    var user = await user.findOne({ email: email });
+    const existingUser = await user.findOne({ email: email });
+    console.log(existingUser)
+    console.log("END EMAIL")
 
-    if (!user) {
+    if (!existingUser) {
       return res
         .status(400)
         .json({ msg: "User doesn't exist please register" });
     }
-
-    const isMatch = await bcrypt.compare(email, user.password);
-
+    
+    const isMatch = await bcrypt.compare(password, existingUser.password);
+    
     if (!isMatch) {
       return res.status(400).json({ msg: "Email or Password is incorrect" });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+    const token = jwt.sign({ id: existingUser._id }, process.env.JWT_SECRET);
 
     return res.json({
       token,
       user: {
-        id: user._id,
-        email: user.email,
-        password: user.password,
-        idsSaved: user.idsSaved,
-        vouchers: user.vouchers,
-        admin: user.admin,
+        id: existingUser._id,
+        email: existingUser.email,
+        // password: existingUser.password,
+        idsSaved: existingUser.idsSaved,
+        vouchers: existingUser.vouchers,
+        admin: existingUser.admin,
       },
     });
   } catch (err) {
@@ -85,8 +91,70 @@ getUser = async (req, res) => {
   }
 };
 
+loginWithJwt = async (req, res) => {
+  try {
+    const token = req.header("x-auth-token")
+    if(!token){
+      return res.status(301).json({msg: "There is not token passed in the header"});
+    }
+
+
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    const existingUser = await user.findById(verified.id)
+    if(!existingUser){
+      return res.status(500).json({msg: "User does not exist with current token"});
+    }
+
+
+
+
+    return res.status(200).json({msg: "Decoded Successfully", user: existingUser})
+  } catch(err) {
+    return res.status(500).json({msg: err})
+  }
+}
+
+function parseJwt (token) {
+  return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+}
+
+checkToken = async (req, res) => {
+  try {
+      const token = req.header("x-auth-token")
+
+      console.log("Before: token exists")
+      if(!token){
+          return res.json(false);
+      }
+
+      console.log("Before: token verify")
+      const verified = jwt.verify(token, process.env.JWT_SECRET);
+      if(!verified){
+          return res.json(false);
+      }
+
+      console.log("Before: check user")
+      
+      const decoded = parseJwt(token);
+      console.log(decoded)
+      var existingUser = await user.findById(verified.id);
+      if(!existingUser){
+          return res.json(false)
+      }
+      console.log("End: check user")
+
+      return res.json(true)
+  } catch (err) {
+      return res.status(500).json({msg: err.message});
+  }
+}
+
+
+
 module.exports = {
   registerUser,
   loginUser,
   getUser,
+  checkToken,
+  loginWithJwt
 };
