@@ -9,6 +9,8 @@ const app = express();
 const cors = require("cors");
 const db = require("../db");
 const routes = require("../routes/index.js");
+const amzItemsRoute = require("../routes/amzItemRoute.js");
+const fileupload = require("express-fileupload");
 
 const options = {
   cors: {
@@ -24,14 +26,19 @@ const options = {
 db.on("error", console.error.bind(console, "MongoDB connection Error"));
 const server = http.createServer(app);
 
+app.use(fileupload());
+app.use(express.static("files"));
 app.use("*", cors());
-app.use(express.json());
+// app.use(express.json());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // const io = socketio(server, options);
 
 // require("./serverState")(app, io);
 
 app.use("/api", routes);
+app.use("/items", amzItemsRoute);
 
 // app.use('/', socketInit);
 
@@ -39,17 +46,11 @@ app.use("/api", routes);
 
 if (process.env.NODE_ENV === "production") {
   app.use(
-    express.static(
-      path.join(__dirname, "../../cantbelievefrontend/build")
-    )
+    express.static(path.join(__dirname, "../../cantbelievefrontend/build"))
   );
   app.get("*", (request, res) => {
     res.sendFile(
-      path.join(
-        __dirname,
-        "../../cantbelievefrontend/build",
-        "index.html"
-      )
+      path.join(__dirname, "../../cantbelievefrontend/build", "index.html")
     );
   });
 } else {

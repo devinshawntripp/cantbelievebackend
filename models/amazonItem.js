@@ -5,6 +5,7 @@ const amazonItemSchema = new mongoose.Schema({
   url: { type: String, required: false },
   desc: { type: String, required: false },
   imgUrl: { type: String, required: false },
+  price: { type: Number, required: false },
   saves: { type: Number, required: false },
 });
 
