@@ -5,6 +5,7 @@ const amazItemCntrl = require("../controllers/amazItem-ctrl");
 
 router.post("/AddProduct", amazItemCntrl.addProduct);
 router.post("/deleteItem", amazItemCntrl.deleteProduct);
+router.post("/UpdateItem", amazItemCntrl.updateItem);
 router.post("/saveProduct", amazItemCntrl.saveProductToUser);
 
 module.exports = router;

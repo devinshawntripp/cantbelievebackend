@@ -3,6 +3,40 @@ const User = require("../models/user");
 
 const uploadImage = require("../helpers/uploadfile");
 
+updateItem = async (req, res) => {
+  try {
+    console.log(req.body);
+    const { desc, id } = req.body;
+
+    console.log(desc);
+
+    const amzItem = await amazItem.findById(id);
+
+    console.log("SAVES: ", amzItem.saves);
+
+    if (!amzItem) {
+      return res
+        .status(500)
+        .json({ msg: `Some error occurred while looking for item ` });
+    }
+
+    amzItem.desc = desc;
+
+    amzItem
+      .save()
+      .then()
+      .catch((err) => {
+        console.log(err);
+      });
+
+    return res
+      .status(200)
+      .json({ msg: `Saved the ids ${amzIds}`, found: foundBool });
+  } catch (error) {
+    return res.status(500).json({ msg: `Internal Server Error: ${error}` });
+  }
+};
+
 addProduct = async (req, res) => {
   try {
     const myFile = req.files.file;
@@ -150,4 +184,5 @@ module.exports = {
   addProduct,
   deleteProduct,
   saveProductToUser,
+  updateItem,
 };

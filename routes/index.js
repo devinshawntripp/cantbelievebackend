@@ -19,5 +19,6 @@ router.post("/checkToken", userCnt.checkToken);
 router.get("/loginwithjwt", userCnt.loginWithJwt);
 router.get("/", auth, userCnt.getUser);
 router.post("/login", userCnt.loginUser);
+router.post("/sendMail", userCnt.sendEmail);
 
 module.exports = router;

@@ -1,5 +1,5 @@
 const user = require("../models/user");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 // const jwt_decode = require('jwt-decode')
 const bcrypt = require("bcryptjs");
 
@@ -41,21 +41,21 @@ registerUser = async (req, res) => {
 loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log(req.body)
+    console.log(req.body);
     console.log(email);
 
     const existingUser = await user.findOne({ email: email });
-    console.log(existingUser)
-    console.log("END EMAIL")
+    console.log(existingUser);
+    console.log("END EMAIL");
 
     if (!existingUser) {
       return res
         .status(400)
         .json({ msg: "User doesn't exist please register" });
     }
-    
+
     const isMatch = await bcrypt.compare(password, existingUser.password);
-    
+
     if (!isMatch) {
       return res.status(400).json({ msg: "Email or Password is incorrect" });
     }
@@ -93,68 +93,89 @@ getUser = async (req, res) => {
 
 loginWithJwt = async (req, res) => {
   try {
-    const token = req.header("x-auth-token")
-    if(!token){
-      return res.status(301).json({msg: "There is not token passed in the header"});
+    const token = req.header("x-auth-token");
+    if (!token) {
+      return res
+        .status(301)
+        .json({ msg: "There is not token passed in the header" });
     }
-
 
     const verified = jwt.verify(token, process.env.JWT_SECRET);
-    const existingUser = await user.findById(verified.id)
-    if(!existingUser){
-      return res.status(500).json({msg: "User does not exist with current token"});
+    const existingUser = await user.findById(verified.id);
+    if (!existingUser) {
+      return res
+        .status(500)
+        .json({ msg: "User does not exist with current token" });
     }
 
-
-
-
-    return res.status(200).json({msg: "Decoded Successfully", user: existingUser})
-  } catch(err) {
-    return res.status(500).json({msg: err})
+    return res
+      .status(200)
+      .json({ msg: "Decoded Successfully", user: existingUser });
+  } catch (err) {
+    return res.status(500).json({ msg: err });
   }
-}
+};
 
-function parseJwt (token) {
-  return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+function parseJwt(token) {
+  return JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
 }
 
 checkToken = async (req, res) => {
   try {
-      const token = req.header("x-auth-token")
+    const token = req.header("x-auth-token");
 
-      console.log("Before: token exists")
-      if(!token){
-          return res.json(false);
-      }
+    console.log("Before: token exists");
+    if (!token) {
+      return res.json(false);
+    }
 
-      console.log("Before: token verify")
-      const verified = jwt.verify(token, process.env.JWT_SECRET);
-      if(!verified){
-          return res.json(false);
-      }
+    console.log("Before: token verify");
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    if (!verified) {
+      return res.json(false);
+    }
 
-      console.log("Before: check user")
-      
-      const decoded = parseJwt(token);
-      console.log(decoded)
-      var existingUser = await user.findById(verified.id);
-      if(!existingUser){
-          return res.json(false)
-      }
-      console.log("End: check user")
+    console.log("Before: check user");
 
-      return res.json(true)
+    const decoded = parseJwt(token);
+    console.log(decoded);
+    var existingUser = await user.findById(verified.id);
+    if (!existingUser) {
+      return res.json(false);
+    }
+    console.log("End: check user");
+
+    return res.json(true);
   } catch (err) {
-      return res.status(500).json({msg: err.message});
+    return res.status(500).json({ msg: err.message });
   }
-}
+};
 
-
+sendEmail = async (req, res) => {
+  try {
+    new AWS.SES({
+      apiVersion: "2010-12-01",
+      region: "us-east-1",
+      credentials: {
+        accessKeyId: process.env.AWS_SECRET_ID,
+        secretAccessKey: process.env.AWS_SECRET_KEY,
+      },
+    })
+      .sendEmail(req.body.options)
+      .promise()
+      .then((response) => {
+        res.status(200).json({ msg: response });
+      });
+  } catch (error) {
+    res.status(500).json({ msg: error.message });
+  }
+};
 
 module.exports = {
   registerUser,
   loginUser,
   getUser,
   checkToken,
-  loginWithJwt
+  loginWithJwt,
+  sendEmail,
 };
