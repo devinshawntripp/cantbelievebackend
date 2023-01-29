@@ -4,6 +4,7 @@ require("dotenv").config();
 
 mongoose
   .connect(process.env.MONGOCONNECTION, {
+    family: 4,
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
