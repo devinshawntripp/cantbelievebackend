@@ -29,9 +29,9 @@ updateItem = async (req, res) => {
         console.log(err);
       });
 
-    return res
-      .status(200)
-      .json({ msg: `Saved the ids ${amzIds}`, found: foundBool });
+    console.log("ADDING THE DESCRIPTION");
+
+    return res.status(200).json({ msg: `Saved the id ${amzItem.id}` });
   } catch (error) {
     return res.status(500).json({ msg: `Internal Server Error: ${error}` });
   }
