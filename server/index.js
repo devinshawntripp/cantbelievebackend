@@ -46,11 +46,11 @@ app.use("/items", amzItemsRoute);
 
 if (process.env.NODE_ENV === "production") {
   app.use(
-    express.static(path.join(__dirname, "../../cantbelievefrontend/build"))
+    express.static(path.join(__dirname, "../../cantbelievefrontend/out"))
   );
   app.get("*", (request, res) => {
     res.sendFile(
-      path.join(__dirname, "../../cantbelievefrontend/build", "index.html")
+      path.join(__dirname, "../../cantbelievefrontend/out", "index.html")
     );
   });
 } else {
