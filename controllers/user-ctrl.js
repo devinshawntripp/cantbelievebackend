@@ -2,6 +2,7 @@ const user = require("../models/user");
 const jwt = require("jsonwebtoken");
 // const jwt_decode = require('jwt-decode')
 const bcrypt = require("bcryptjs");
+const AWS = require("aws-sdk");
 
 registerUser = async (req, res) => {
   try {
@@ -153,6 +154,7 @@ checkToken = async (req, res) => {
 
 sendEmail = async (req, res) => {
   try {
+    console.log(req.body);
     new AWS.SES({
       apiVersion: "2010-12-01",
       region: "us-east-1",
@@ -164,9 +166,15 @@ sendEmail = async (req, res) => {
       .sendEmail(req.body.options)
       .promise()
       .then((response) => {
+        console.log(response);
         res.status(200).json({ msg: response });
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).json({ msg: err.message });
       });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ msg: error.message });
   }
 };

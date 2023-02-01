@@ -20,7 +20,7 @@ const options = {
     credentials: true,
   },
   allowEI03: true,
-  origins: ["http://127.0.0.1:8174"],
+  origins: ["http://127.0.0.1:8174, https://whyareyoubuyingthis.com"],
 };
 
 db.on("error", console.error.bind(console, "MongoDB connection Error"));
