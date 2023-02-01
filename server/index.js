@@ -20,7 +20,7 @@ const options = {
     credentials: true,
   },
   allowEI03: true,
-  origins: ["https://whyareyoubuyingthis.com"],
+  origins: ["http://127.0.0.1:8174"],
 };
 
 db.on("error", console.error.bind(console, "MongoDB connection Error"));
@@ -36,15 +36,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // const io = socketio(server, options);
 
 // require("./serverState")(app, io);
-
-app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "whyareyoubuyingthis.com");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  next();
-});
 
 app.use("/api", routes);
 app.use("/items", amzItemsRoute);
