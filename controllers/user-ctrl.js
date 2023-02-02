@@ -1,6 +1,5 @@
 const user = require("../models/user");
 const jwt = require("jsonwebtoken");
-// const jwt_decode = require('jwt-decode')
 const bcrypt = require("bcryptjs");
 const AWS = require("aws-sdk");
 
@@ -17,7 +16,7 @@ registerUser = async (req, res) => {
     if (existingUser) {
       return res
         .status(400)
-        .json({ msg: "User with that email already exists" });
+        .json({ msg: "User with that email already exists please sign in" });
     }
 
     const salt = await bcrypt.genSalt();
@@ -26,7 +25,7 @@ registerUser = async (req, res) => {
     const newUser = new user({
       email: email,
       password: passHash,
-      admin: true,
+      role: "user",
       vouchers: 0,
       idsSaved: [],
     });
@@ -39,11 +38,63 @@ registerUser = async (req, res) => {
   }
 };
 
+/**
+ *
+ * login the user and check for google auth
+ */
 loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    console.log(req.body);
-    console.log(email);
+    const { email, password, jwtGoogleCred } = req.body;
+    /**
+     * check if a google user
+     */
+    if (jwtGoogleCred !== undefined && jwtGoogleCred !== "") {
+      console.log(jwtGoogleCred);
+      const decodedObj = jwt.decode(jwtGoogleCred);
+      const existingUser = await user.findOne({ email: decodedObj.email });
+      if (!existingUser) {
+        //create a user using googles "sub"
+        const salt = await bcrypt.genSalt();
+        const passHash = await bcrypt.hash(decodedObj.sub, salt);
+
+        const newUser = new user({
+          email: email,
+          password: passHash,
+          role: "user",
+          vouchers: 0,
+          idsSaved: [],
+        });
+
+        const saveUser = await newUser.save();
+
+        return res
+          .status(200)
+          .json({ msg: "Successfully saved!", user: saveUser });
+      } else {
+        if (existingUser.password != "") {
+          const token = jwt.sign(
+            { id: existingUser._id, role: existingUser.role },
+            process.env.JWT_SECRET,
+            {
+              expiresIn: "10m",
+            }
+          );
+
+          return res.json({
+            token,
+            user: {
+              id: existingUser._id,
+              email: existingUser.email,
+              idsSaved: existingUser.idsSaved,
+              vouchers: existingUser.vouchers,
+              role: existingUser.role,
+            },
+          });
+        }
+      }
+
+      return res.status(500).json({ msg: "google" });
+    }
 
     const existingUser = await user.findOne({ email: email });
     console.log(existingUser);
@@ -61,7 +112,13 @@ loginUser = async (req, res) => {
       return res.status(400).json({ msg: "Email or Password is incorrect" });
     }
 
-    const token = jwt.sign({ id: existingUser._id }, process.env.JWT_SECRET);
+    const token = jwt.sign(
+      { id: existingUser._id, role: existingUser.role },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "10m",
+      }
+    );
 
     return res.json({
       token,
@@ -71,7 +128,7 @@ loginUser = async (req, res) => {
         // password: existingUser.password,
         idsSaved: existingUser.idsSaved,
         vouchers: existingUser.vouchers,
-        admin: existingUser.admin,
+        role: existingUser.role,
       },
     });
   } catch (err) {
@@ -142,6 +199,10 @@ checkToken = async (req, res) => {
     console.log(decoded);
     var existingUser = await user.findById(verified.id);
     if (!existingUser) {
+      return res.json(false);
+    }
+
+    if (decoded.exp == undefined) {
       return res.json(false);
     }
     console.log("End: check user");
