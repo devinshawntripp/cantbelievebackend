@@ -58,7 +58,7 @@ loginUser = async (req, res) => {
         const passHash = await bcrypt.hash(decodedObj.sub, salt);
 
         const newUser = new user({
-          email: email,
+          email: decodedObj.email,
           password: passHash,
           role: "user",
           vouchers: 0,
