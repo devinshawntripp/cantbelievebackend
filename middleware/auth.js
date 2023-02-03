@@ -17,7 +17,12 @@ const user = require("../models/user");
 const auth = (req, res, next) => {
   try {
     //get the token from the request header and check if it exists
-    const token = req.header("x-auth-token");
+
+    if (req.headers.authorization === undefined) {
+      return res.status(401).json({ msg: "No authorization header passed" });
+    }
+
+    const token = req.headers.authorization.split(" ")[1];
     if (!token) {
       return res
         .status(401)
