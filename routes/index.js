@@ -5,8 +5,18 @@ const userCnt = require("../controllers/user-ctrl");
 const auth = require("../middleware/auth");
 
 //get all amazon items in database
-router.get("/items", async (req, res) => {
-  const items = await amazItem.find({});
+router.post("/items", async (req, res) => {
+  const pageSize = 4;
+  const pageNumber = req.query.pageNumber;
+  var t = pageNumber - 1;
+  if (pageNumber === 1) {
+    t = 0;
+  }
+  const items = await amazItem
+    .find({})
+    .skip(t * pageSize)
+    .limit(pageSize);
+
   res.send({ success: true, items: items });
 });
 
