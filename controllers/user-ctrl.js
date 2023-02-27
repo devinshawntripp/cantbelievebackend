@@ -38,65 +38,108 @@ registerUser = async (req, res) => {
   }
 };
 
+const checkForExisting = async (existingUser, decodedObj) => {
+  if (!existingUser) {
+    //create a user using googles "sub"
+    const salt = await bcrypt.genSalt();
+    const passHash = await bcrypt.hash(decodedObj.id, salt);
+
+    const newUser = new user({
+      email: decodedObj.email,
+      password: passHash,
+      role: "user",
+      vouchers: 0,
+      idsSaved: [],
+    });
+
+    const saveUser = await newUser.save();
+
+    return { msg: "Successfully saved!", user: saveUser };
+  } else {
+    if (existingUser.password != "") {
+      const token = jwt.sign(
+        { id: existingUser._id, role: existingUser.role },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: process.env.JWT_ACCESS_TOKEN_TIMEOUT,
+        }
+      );
+
+      return {
+        token,
+        user: {
+          id: existingUser._id,
+          email: existingUser.email,
+          idsSaved: existingUser.idsSaved,
+          vouchers: existingUser.vouchers,
+          role: existingUser.role,
+        },
+      };
+    }
+  }
+};
+
 /**
  *
  * login the user and check for google auth
  */
 loginUser = async (req, res) => {
   try {
-    const { email, password, jwtGoogleCred } = req.body;
+    console.log("RECEIVING SOME DATA");
+    const { email, password, googleAccessToken, facebookAccessToken } =
+      req.body;
+
+    console.log("REQ BODY: ", req.body);
+
+    if (facebookAccessToken !== undefined && facebookAccessToken !== "") {
+      const decodedObj = await fetch(
+        `https://graph.facebook.com/me?fields=['name','email','gender','location','picture']&access_token=${facebookAccessToken}`
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          return data;
+        });
+      console.log("Decoded facebook: ", decodedObj);
+
+      const existingUser = await user.findOne({ email: decodedObj.email });
+      const returnobj = await checkForExisting(existingUser, decodedObj);
+      console.log("RETURN OBJ: ", returnobj);
+
+      if (returnobj === undefined || returnobj === "") {
+        return res.status(500).json({ msg: "facebook login unsucessful" });
+      } else {
+        return res.status(200).json(returnobj);
+      }
+    }
+
     /**
      * check if a google user
      */
-    if (jwtGoogleCred !== undefined && jwtGoogleCred !== "") {
-      console.log(jwtGoogleCred);
-      const decodedObj = jwt.decode(jwtGoogleCred);
-      const existingUser = await user.findOne({ email: decodedObj.email });
-      if (!existingUser) {
-        //create a user using googles "sub"
-        const salt = await bcrypt.genSalt();
-        const passHash = await bcrypt.hash(decodedObj.sub, salt);
+    if (googleAccessToken !== undefined && googleAccessToken !== "") {
+      // https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=
 
-        const newUser = new user({
-          email: decodedObj.email,
-          password: passHash,
-          role: "user",
-          vouchers: 0,
-          idsSaved: [],
+      const decodedObj = await fetch(
+        `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${googleAccessToken}`
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          return data;
         });
+      console.log("DECODED OBJECT: ", decodedObj);
+      // console.log(jwtGoogleCred);
+      // const decodedObj = jwt.decode(jwtGoogleCred);
+      const existingUser = await user.findOne({ email: decodedObj.email });
+      const returnobj = await checkForExisting(existingUser, decodedObj);
 
-        const saveUser = await newUser.save();
-
-        return res
-          .status(200)
-          .json({ msg: "Successfully saved!", user: saveUser });
+      if (returnobj === undefined || returnobj === "") {
+        return res.status(500).json({ msg: "google login unsucessful" });
       } else {
-        if (existingUser.password != "") {
-          const token = jwt.sign(
-            { id: existingUser._id, role: existingUser.role },
-            process.env.JWT_SECRET,
-            {
-              expiresIn: "10m",
-            }
-          );
-
-          return res.json({
-            token,
-            user: {
-              id: existingUser._id,
-              email: existingUser.email,
-              idsSaved: existingUser.idsSaved,
-              vouchers: existingUser.vouchers,
-              role: existingUser.role,
-            },
-          });
-        }
+        return res.status(200).json(returnobj);
       }
-
-      return res.status(500).json({ msg: "google" });
     }
 
     const existingUser = await user.findOne({ email: email });
+
     console.log(existingUser);
     console.log("END EMAIL");
 
