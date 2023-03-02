@@ -1,37 +1,85 @@
 const User = require("../models/user");
 const BlogPost = require("../models/blogPost");
 
+const uploadImage = require("../helpers/uploadfile");
+
 const addBlogPost = async (req, res) => {
   try {
-    const { title, author, metaContent, content } = req.body;
+    // title: { type: String, required: true },
+    // frontFacingPic: { type: String, required: true },
+    // summary: { type: String, required: true },
+    // likes: { type: Number, required: false },
+    // dislikes: { type: Number, required: false },
+    // views: { type: Number, required: false },
+    // author: { type: String, required: false },
+    // metaContent: [
+    //   {
+    //     metaContentObj: htmlTagSchema,
+    //   },
+    // ],
+    // content: [
+    //   {
+    //     arrayOfBlogItem: htmlTagSchema,
+    //   },
+    // ],
+    // date: { type: Date, required: false },
+    const { title, summary, likes, dislikes, views, author } = req.body;
+
+    console.log(req.files.frontFacingPic);
+
+    const arrayOfBlogItems = JSON.parse(req.body.arrayOfBlogItems);
+    console.log("ARRAY OF BLOG ITEMS: ", arrayOfBlogItems);
+
+    const imageUrl = await uploadImage(req.files.frontFacingPic);
 
     const newBlogPost = new BlogPost({
       title: title,
+      frontFacingPic: imageUrl,
+      summary: summary,
+      likes: likes,
+      dislikes: dislikes,
+      views: views,
       author: author,
-      metaContent: metaContent,
-      content: content,
+      content: arrayOfBlogItems,
       date: new Date(),
     });
 
-    newBlogPost.save((error) => {
+    return newBlogPost.save((error) => {
       if (error) {
-        console.error(error);
-        res
+        console.log(error);
+        return res
           .status(500)
-          .json({ msg: "error while saving", error: error.message });
+          .json({ msg: "Error while saving", error: error.message });
       } else {
-        console.log("Blog post saved!");
-        res.status(200).json({
-          msg:
-            "you have successfully saved the blogpost at id: " +
-            newBlogPost._id,
+        console.log("Blog post saved! at: " + newBlogPost._id);
+        return res.status(200).json({
+          msg: "successfully saved the blog post with id: " + newBlogPost._id,
         });
       }
     });
+
+    // return res.status(200).json({ msg: "success" });
   } catch (error) {
+    console.log(error);
     return res
       .status(500)
       .json({ msg: "Internal Server Error", error: error.message });
+  }
+};
+
+getAll = async (req, res) => {
+  try {
+    console.log("HI I AM HERE");
+    const blogs = await BlogPost.find({});
+    console.log("BLOGS: ", blogs);
+
+    res.status(200).json({
+      blogs: blogs,
+      msg: "successfully got the blogs",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ msg: "some error happened" });
   }
 };
 
@@ -165,4 +213,5 @@ module.exports = {
   getBlogPostsByQuery,
   editBlogPostById,
   deleteBlogPostById,
+  getAll,
 };

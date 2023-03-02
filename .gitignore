@@ -6,6 +6,9 @@
 
 .env
 
+./.env
+
+
 ./amazonaff-349303-ccea88bd6cff
 amazonaff-349303-ccea88bd6cff
 ./amzServiceKey.json

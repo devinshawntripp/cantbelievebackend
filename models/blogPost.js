@@ -1,23 +1,23 @@
 const mongoose = require("mongoose");
 
+const Attributes = new mongoose.Schema({
+  class: { type: String, required: false },
+  src: { type: String, required: false },
+  id: { type: String, required: false },
+  altText: { type: String, required: false },
+  href: { type: String, required: false },
+});
 const extraTags = new mongoose.Schema({
   tag: { type: String, required: true },
-  class: { type: String, required: false },
-  name: { type: String, required: false },
-  content: { type: String, required: false },
-  id: { type: String, required: false },
-  src: { type: String, required: false },
-  href: { type: String, required: false },
+  attributes: Attributes,
+  content: { type: mongoose.Mixed, required: false },
 });
 
 const htmlTagSchema = new mongoose.Schema({
   tag: { type: String, required: true },
-  class: { type: String, required: false },
-  name: { type: String, required: false },
-  content: { type: String, required: false },
-  id: { type: String, required: false },
-  src: { type: String, required: false },
-  href: { type: String, required: false },
+  value: { type: String, required: false },
+  attributes: Attributes,
+  language: { type: String, required: false },
   extraInfo: [
     {
       name: { type: String, required: false },
@@ -28,8 +28,7 @@ const htmlTagSchema = new mongoose.Schema({
   extraTags: {
     type: [
       {
-        tag: extraTags,
-        text: { type: String, required: false },
+        extraInnerTags: extraTags,
       },
     ],
     required: false,
@@ -37,17 +36,21 @@ const htmlTagSchema = new mongoose.Schema({
 });
 
 const blogPostSchema = new mongoose.Schema({
-  title: { type: String, required: false },
+  title: { type: String, required: true },
+  frontFacingPic: { type: String, required: true },
+  summary: { type: String, required: true },
+  likes: { type: Number, required: false },
+  dislikes: { type: Number, required: false },
+  views: { type: Number, required: false },
   author: { type: String, required: false },
-  metaContent: [
-    {
-      tag: htmlTagSchema,
-    },
-  ],
+  // metaContent: [
+  //   {
+  //     metaContentObj: htmlTagSchema,
+  //   },
+  // ],
   content: [
     {
-      tag: htmlTagSchema,
-      text: { type: String, required: false },
+      arrayOfBlogItem: htmlTagSchema,
     },
   ],
   date: { type: Date, required: false },
