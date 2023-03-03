@@ -50,7 +50,7 @@ const blogPostSchema = new mongoose.Schema({
   // ],
   content: [
     {
-      arrayOfBlogItem: htmlTagSchema,
+      type: mongoose.Schema.Types.Mixed,
     },
   ],
   date: { type: Date, required: false },

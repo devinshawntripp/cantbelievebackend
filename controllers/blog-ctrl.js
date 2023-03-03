@@ -120,6 +120,20 @@ const getBlogPostsByQuery = async (req, res) => {
   }
 };
 
+addPhoto = async (req, res) => {
+  try {
+    const imageUrl = await uploadImage(req.files.pic);
+    return res.status(200).json({
+      msg: "successfully uploaded a photo to the google database",
+      src: imageUrl,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ msg: "uploading unsuccessful", reason: error });
+  }
+};
+
 editBlogPostById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -214,4 +228,5 @@ module.exports = {
   editBlogPostById,
   deleteBlogPostById,
   getAll,
+  addPhoto,
 };

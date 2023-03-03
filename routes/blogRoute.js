@@ -9,5 +9,6 @@ router.post("/add-blog-post", blogCtrl.addBlogPost);
 router.get("/get-blog-post/:id", blogCtrl.getBlogPostById);
 router.post("/edit-blog-post/:id", blogCtrl.editBlogPostById);
 router.get("/getall", blogCtrl.getAll);
+router.post("/add-photo", blogCtrl.addPhoto);
 
 module.exports = router;
