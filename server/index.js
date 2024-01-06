@@ -69,4 +69,8 @@ if (process.env.NODE_ENV === "production") {
   PORT = 8174;
 }
 
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error);
+});
+
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

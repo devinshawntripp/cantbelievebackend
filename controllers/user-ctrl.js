@@ -2,6 +2,7 @@ const user = require("../models/user");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const AWS = require("aws-sdk");
+const axios = require("axios");
 
 registerUser = async (req, res) => {
   try {
@@ -39,6 +40,7 @@ registerUser = async (req, res) => {
 };
 
 const checkForExisting = async (existingUser, decodedObj) => {
+  console.log("IN CHECK FOR EXISTING");
   if (!existingUser) {
     //create a user using googles "sub"
     const salt = await bcrypt.genSalt();
@@ -92,9 +94,10 @@ loginUser = async (req, res) => {
     console.log("REQ BODY: ", req.body);
 
     if (facebookAccessToken !== undefined && facebookAccessToken !== "") {
-      const decodedObj = await fetch(
-        `https://graph.facebook.com/me?fields=['name','email','gender','location','picture']&access_token=${facebookAccessToken}`
-      )
+      const decodedObj = await axios
+        .get(
+          `https://graph.facebook.com/me?fields=['name','email','gender','location','picture']&access_token=${facebookAccessToken}`
+        )
         .then((response) => response.json())
         .then((data) => {
           return data;
@@ -117,19 +120,46 @@ loginUser = async (req, res) => {
      */
     if (googleAccessToken !== undefined && googleAccessToken !== "") {
       // https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=
+      console.log("GOOGLE ACCESS FOUND");
 
-      const decodedObj = await fetch(
-        `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${googleAccessToken}`
-      )
-        .then((response) => response.json())
-        .then((data) => {
-          return data;
+      // const decodedObj = await fetch(
+      //   `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${googleAccessToken}`
+      // )
+      //   .then((response) => response.json())
+      //   .then((data) => {
+      //     return data;
+      //   });
+      // googleAccessToken = googleAccessToken.replace(/\n/g, "");
+
+      const decodedObj = await axios
+        .get("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${googleAccessToken}`,
+          },
+        })
+        .then((response) => {
+          if (response.status !== 200) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          console.log(response.data);
+
+          return response.data;
+        })
+        .catch((error) => {
+          console.error("Error fetching data: ", error);
         });
+
+      // Rename 'sub' to 'id'
+      decodedObj.id = decodedObj.sub;
+      delete decodedObj.sub;
+
       console.log("DECODED OBJECT: ", decodedObj);
       // console.log(jwtGoogleCred);
       // const decodedObj = jwt.decode(jwtGoogleCred);
       const existingUser = await user.findOne({ email: decodedObj.email });
       const returnobj = await checkForExisting(existingUser, decodedObj);
+      console.log("CHECKING FOR RETURN SUCCESS");
 
       if (returnobj === undefined || returnobj === "") {
         return res.status(500).json({ msg: "google login unsucessful" });
